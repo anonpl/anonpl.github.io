@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html>
+    <head>
+        <title>TPMAP 62: Populations</title>
+        <script>
+       
+        </script>
+        <!-- external libs from cdnjs -->
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.css">
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.js"></script>
+
+        <!-- PivotTable.js libs from ../dist -->
+        <link rel="stylesheet" type="text/css" href="dist/pivot.css">
+        <script type="text/javascript" src="dist/pivot.js"></script>
+        <script type="text/javascript" src="dist/d3_renderers.js"></script>
+        <script type="text/javascript" src="dist/c3_renderers.js"></script>
+        <script type="text/javascript" src="dist/export_renderers.js"></script>
+
+        <style>
+            html { height:100%; }
+            body {
+                font-family: Kanit;
+                min-height: 95%;
+                border: 5px dotted;
+            }
+            select {
+                font-family: Kanit;
+                text-align-last:center;
+            }
+
+            button {
+                font-family: Kanit;
+            }
+
+            optgroup { 
+                font-size:14px;
+                font-family: Kanit;
+            }
+
+            p {
+                font-family: Kanit;
+            }
+
+            table {
+                border-collapse: collapse;
+            }
+
+            table, th, td {
+                border: 1px solid black;
+            }
+            
+
+
+            .whiteborder {border-color: white;}
+            .greyborder {border-color: lightgrey;}
+            #filechooser {
+                color: #555;
+                text-decoration: underline;;
+                cursor: pointer; /* "hand" cursor */
+            }
+            .node {
+              border: solid 1px white;
+              font: 10px sans-serif;
+              line-height: 12px;
+              overflow: hidden;
+              position: absolute;
+              text-indent: 2px;
+            }
+            .c3-line, .c3-focused {stroke-width: 3px !important;}
+            .c3-bar {stroke: white !important; stroke-width: 1;}
+            .c3 text { font-size: 12px; color: grey;}
+            .tick line {stroke: white;}
+            .c3-axis path {stroke: grey;}
+            .c3-circle { opacity: 1 !important; }
+            .c3-xgrid-focus {visibility: hidden !important;}
+
+            /* The Modal (background) */
+            .modal {
+                display: none; /* Hidden by default */
+                position: fixed; /* Stay in place */
+                z-index: 1; /* Sit on top */
+                left: 0;
+                top: 0;
+                width: 100%; /* Full width */
+                height: 100%; /* Full height */
+                overflow: auto; /* Enable scroll if needed */
+                background-color: rgb(0,0,0); /* Fallback color */
+                background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            }
+
+            /* Modal Content/Box */
+            .modal-content {
+                background-color: #fefefe;
+                margin: 15% auto; /* 15% from the top and centered */
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%; /* Could be more or less, depending on screen size */
+            }
+
+            /* The Close Button */
+            .close {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+            }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet">
+
+    <body class="whiteborder">
+        <script type="text/javascript">
+            $(function(){
+                //console.log('abc');
+                /*
+                var renderers = $.extend(
+                    $.pivotUtilities.renderers,
+                    $.pivotUtilities.c3_renderers,
+                    $.pivotUtilities.d3_renderers,
+                    $.pivotUtilities.export_renderers
+                    );
+                */
+                var renderers = $.extend(
+                    $.pivotUtilities.renderers,
+                    $.pivotUtilities.export_renderers
+                );
+
+                var parseAndPivot = function(f) {
+                    $("#output").html("<p align='center' style='color:grey;'>(processing...)</p>");
+                    
+                    var sum = $.pivotUtilities.aggregatorTemplates.sum;
+                    var numberFormat = $.pivotUtilities.numberFormat;
+                    var intFormat = numberFormat({digitsAfterDecimal: 0});
+
+                    
+
+                    Papa.parse(f, {
+                        download: true,
+                        skipEmptyLines: true,
+                        error: function(e){ alert(e) },
+                        complete: function(parsed){
+                            //console.log(parsed.data);
+                            
+                            $("#output").pivotUI(parsed.data, {hiddenAttributes:['population'], aggregators: {'No. Population': function() {return sum(intFormat)(['population'])}}}, { renderers: renderers }, true);
+                        }
+                    });
+                };
+                $("#datasource").bind("change", function() {
+                    if(this.value == 1)
+                    {
+                        parseAndPivot('tpmap.population.csv');
+                        $('#data_1').css("display", "block");
+                        $('#data_2').css("display", "none");
+                    }
+                    /*
+                    else if(this.value == 2)
+                    {
+                        parseAndPivot('wholekingdom.csv');
+                        $('#data_2').css("display", "block");
+                        $('#data_1').css("display", "none");
+                    }*/
+                });
+
+                /*
+                $("#csv").bind("change", function(event){
+                    parseAndPivot(event.target.files[0]);
+                });
+
+                $("#textarea").bind("input change", function(){
+                    parseAndPivot($("#textarea").val());
+                });
+                */
+                var dragging = function(evt) {
+                    evt.stopPropagation();
+                    evt.preventDefault();
+                    evt.originalEvent.dataTransfer.dropEffect = 'copy';
+                    $("body").removeClass("whiteborder").addClass("greyborder");
+                };
+
+                var endDrag = function(evt) {
+                    evt.stopPropagation();
+                    evt.preventDefault();
+                    evt.originalEvent.dataTransfer.dropEffect = 'copy';
+                    $("body").removeClass("greyborder").addClass("whiteborder");
+                };
+
+                var dropped = function(evt) {
+                    evt.stopPropagation();
+                    evt.preventDefault();
+                    $("body").removeClass("greyborder").addClass("whiteborder");
+                    parseAndPivot(evt.originalEvent.dataTransfer.files[0]);
+                };
+
+                $("html")
+                    .on("dragover", dragging)
+                    .on("dragend", endDrag)
+                    .on("dragexit", endDrag)
+                    .on("dragleave", endDrag)
+                    .on("drop", dropped);
+             });
+        </script>
+        <!-- <p><a href="index.html">&laquo; back to PivotTable.js examples</a></p>-->
+            <h3 style="text-align: center">ตัวอย่าง Pivot Table กับ TPMAP ด้วย <a href="https://github.com/nicolaskruchten/pivottable">PivotTable.js</a> </h3>
+            <p align="center" style="line-height: 1.5">
+            <select id='datasource'>
+                <optgroup>
+                <option value="0" selected>-- เลือก Data Source --</option>    
+                <option value="1">สถิติจำนวนประชากรจาก จปฐ 62 และบัตรสวัสดิการรัฐ</option>
+                <!--<option value="2">TPMAP62 Sunburst Dataset (ระวังโหลดนาน)</option>-->
+                </optgroup>
+            </select>
+            <button id="datadict">คำอธิบายข้อมูล</button>
+        </div>
+        <div id="output" style="margin: 10px;"></div>
+        
+        <!-- The Modal -->
+        <div id="dataModal" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <div id='data_1' style="display:block"> 
+            <p> <u>คำอธิบายข้อมูล: สถิติจำนวนประชากรจาก จปฐ 62 และบัตรสวัสดิการรัฐ (จำนวนคน)</u></p>
+            <div style="display:block; text-align:center"><img src="tpmap.jpg" style="width: 400px;"/></div>
+            <p> ข้อมูลนี้เกิดจากการเชื่อมโยง 3 ถังข้อมูลได้แก่ จปฐ 62 บัตรสวัสดิการรัฐ และข้อมูลผู้รับเบี้ยผู้สูงอายุ และพิการ จากกรมส่งเสริมการปกครองท้องถิ่น (ณ พค. 62)
+                โดยข้อมูลจะสรุปสถิติประชากรตามจังหวัดที่อาศัย ซึ่งจะอิงกับข้อมูลสองถังแรกเป็นหลัก (เนื่องจากมีข้อมูลที่อยู่) ดังนั้นประชากรรวมจะเท่ากับจำนวนคนจาก 2 ถึงที่ union กัน 
+            </p><p>เนื่องจากข้อมูลสองถังนี้มี *ความแตกต่าง* กันอยู่บ้าง 
+                ในกรณีที่คน ๆ เดียวกันปรากฎอยู่ทั้งสองทัง การเชื่อมโยงจะใช้หลักเกณฑ์ดังนี้ <ul>
+                    <li> ใช้จังหวัดที่อยู่ ตาม จปฐ
+                    <li> ใช้อายุ (ช่วงวัย) ที่คำนวณจากวันเกิดตามที่ปรากฎใน บัตรสวัสดิการรัฐ (จปฐ ระบุเพียงแต่อายุปี)
+                </ul> 
+            </p>
+            <p>รายละเอียดของสดมภ์ข้อมูล มีดังนี้</p>
+            <table>
+                <tr><th>สดมภ์</th><th>รายละเอียด</th></tr>
+                <tr><td>province_name</td><td>ชื่อจังหวัด (จปฐ ไม่มีกรุงเทพมหานคร)</td></tr>
+                <tr><td>ageclass</td><td>ช่วงวัย [<3: เด็กอ่อน , 3-4: เด็กก่อนวัยเรียน, 5-14: เด็ก , 15-59 ผู้ใหญ่ และ ผู้สูงอายุตั้งแต่ 60 ปีขึ้นไป]</td</tr>  
+                <tr><td>mof_exist</td><td>อยู่ในฐานบัตรสวัสดิการ [1: อยู่ (มีบัตร)  0:ไม่อยู่ (ไม่มีบัตร)]</td></tr>
+                <tr><td>ebmn_exist</td><td>อยู่ในฐาน จปฐ 62 [1: อยู่   0:ไม่อยู่ </td></tr>
+                <tr><td>dla_elderly</td><td>รับเบี้ยผู้สูงอายุ [Y: รับ   0:ไม่ได้รับ (หรือไม่ปรากฎในฐาน)] </td></tr>
+                <tr><td>dla_disabled</td><td>รับเบี้ยคนพิการ [Y: รับ   0:ไม่ได้รับ (หรือไม่ปรากฎในฐาน)]</td></tr>
+                <tr><td>MPI_poor</td><td>Y: ตกเกณฑ์ยากจน MPI (รวม)  N: ไม่ตก   NA: ไม่มีข้อมูลใน จปฐ (คำนวณไม่ได้)</td></tr>
+                <tr><td>MPI_health</td><td>Y: ตกเกณฑ์ยากจน MPI มิติสุขภาพ  N: ไม่ตก   NA: ไม่มีข้อมูลใน จปฐ (คำนวณไม่ได้)</td></tr>
+                <tr><td>MPI_education</td><td>Y: ตกเกณฑ์ยากจน MPI มิติการศึกษา  N: ไม่ตก   NA: ไม่มีข้อมูลใน จปฐ (คำนวณไม่ได้)</td></tr>
+                <tr><td>MPI_income</td><td>Y: ตกเกณฑ์ยากจน MPI มิติการเงิน  N: ไม่ตก   NA: ไม่มีข้อมูลใน จปฐ (คำนวณไม่ได้)</td></tr>       
+                <tr><td>MPI_living</td><td>Y: ตกเกณฑ์ยากจน MPI มิติความเป็นอยู่  N: ไม่ตก   NA: ไม่มีข้อมูลใน จปฐ (คำนวณไม่ได้)</td></tr> 
+                <tr><td>MPI_accessibility</td><td>Y: ตกเกณฑ์ยากจน MPI มิติการเข้าถึงบริการรัฐ  N: ไม่ตก   NA: ไม่มีข้อมูลใน จปฐ (คำนวณไม่ได้)</td></tr>      
+            </table>
+          
+        </div>
+
+        <div id='data_2' style="display:block"> 
+        <p><u>คำอธิบายข้อมูล: TPMAP62 Sunburst Dataset</u></p>
+        <p> ข้อมูลนี้เกิดจากการเชื่อมโยง 3 ถังข้อมูลได้แก่ จปฐ 62 บัตรสวัสดิการรัฐ และข้อมูลผู้รับเบี้ยผู้สูงอายุ และพิการ จากกรมส่งเสริมการปกครองท้องถิ่น (ณ พค. 62) โดยยึด
+            ข้อมูลบุคคล เช่น อายุ อาชีพ และความเป็นครัวเรือนของ จปฐ เป็นแกนหลัก และเสริมด้วยข้อมูลการถือบัตรสวัสดิการรัฐ / การรับเบี้ยผู้สูงอายุและผู้พิการ ดังนั้นจำนวนประชากรรวมจะเท่ากับประชากรใน จปฐ 62
+        </p> <p> 
+            เนื่องจากข้อมูลมีจำนวนสดมภ์เยอะกว่าฐานข้อมูลข้างบนค่อนข้างมาก จึงตัดชื่อจังหวัดออก (<a href='https://analytics.tpmap.in.th'>ฐานข้อมูลนี้สามารถเล่นได้อีกมุมมองด้วย Chart แบบ Sunburst</a>) 
+            </p>
+       
+        <p>รายละเอียดของสดมภ์ข้อมูล มีดังนี้</p>
+          <table>
+            <tr><th>สดมภ์</th><th>รายละเอียด</th></tr>            
+            <tr><td>ageclass</td><td>ช่วงวัย [<3: เด็กอ่อน , 3-4: เด็กก่อนวัยเรียน, 5-14: เด็ก , 15-59 ผู้ใหญ่ และ ผู้สูงอายุตั้งแต่ 60 ปีขึ้นไป]</td</tr>  
+            <tr><td>gender</td><td>เพศ [ช: ชาย   ญ: หญิง]</td></tr>
+            <tr><td>occupation</td><td>อาชีพ (ตามที่แจ้งใน จปฐ 62)<td></td></tr>
+            <tr><td>education</td><td>การศึกษาสูงสุด (ตามที่แจ้งใน จปฐ 62)</td></tr>
+            <tr><td>hh_relation</td><td>ความสัมพันธ์ของคนในบ้าน (ตามที่แจ้งใน จปฐ 62)</td></tr>
+            <tr><td>chronic_patient</td><td>ป่วยติดเตียงหรือไม่ [1: ใช่   0: ไม่ใช่] (ตามที่แจ้งใน จปฐ 62)</td></tr>
+            <tr><td>MOF_VAL</td><td>อยู่ในฐานบัตรสวัสดิการ [1: อยู่ (มีบัตร)  0:ไม่อยู่ (ไม่มีบัตร)]</td></tr>
+            <tr><td>dla_elderly</td><td>รับเบี้ยผู้สูงอายุ [1: รับ   0:ไม่ได้รับ (หรือไม่ปรากฎในฐาน สถ.)] </td></tr>
+            <tr><td>dla_disabled</td><td>รับเบี้ยคนพิการ [1: รับ   0:ไม่ได้รับ (หรือไม่ปรากฎในฐาน  สถ.)]</td></tr>
+            <tr><td>HAS_ELDERLY</td><td>มีผู้สูงอายุในบ้านหรือไม่ [1: มี   0:ไม่มี (ผู้สูงอายุ และครัวเรือนตามข้อมูล จปฐ 62)]</td></tr>
+            <tr><td>HAS_CHILDREN</td><td>มีเด็กในบ้านหรือไม่ [1: มี   0:ไม่มี (ผู้สูงอายุ และครัวเรือนตามข้อมูล จปฐ 62)]</td></tr>
+            <tr><td>HH_MOF_WELFARE</td><td>คนในบ้านถือบัตรสวัสดิการหรือไม่ [1: มีคนถือ   0:ไม่ใครถือเลย (ครัวเรือนตามข้อมูล จปฐ 62)]</td></tr>
+            <tr><td>HAS_DLA_DISABLED</td><td>มีคนในบ้านรับเบี้ยผู้พิการหรือไม่ [1: มี   0:ไม่มี (ครัวเรือนตามข้อมูล จปฐ 62)]</td></tr>
+            <tr><td>HAS_DLA_ELDERLY</td><td>มีคนในบ้านรับเบี้ยผู้สูงอายุหรือไม่ [1: มี   0:ไม่มี (ครัวเรือนตามข้อมูล จปฐ 62)]</td></tr>
+            <tr><td>poor_household_CNT</td><td>บ้านตกเกณฑ์ยากจน MPI (รวม) ที่คำนวณจากตัวชี้วัด จปฐ  หรือไม่ [1: ตก   0: ไม่ตก]</td></tr>
+            <tr><td>poor_household_HEALTH</td><td>บ้านตกเกณฑ์ยากจน MPI ด้านสุขภาพ ที่คำนวณจากตัวชี้วัด จปฐ  หรือไม่ [1: ตก   0: ไม่ตก]</td></tr>
+            <tr><td>poor_household_LIVING</td><td>บ้านตกเกณฑ์ยากจน MPI ด้านความเป็นอยู่ ที่คำนวณจากตัวชี้วัด จปฐ  หรือไม่ [1: ตก   0: ไม่ตก]</td></tr>
+            <tr><td>poor_household_EDUCATION</td><td>บ้านตกเกณฑ์ยากจน MPI ด้านการศึกษา ที่คำนวณจากตัวชี้วัด จปฐ  หรือไม่ [1: ตก   0: ไม่ตก]</td></tr>
+            <tr><td>poor_household_INCOME</td><td>บ้านตกเกณฑ์ยากจน MPI ด้านรายได้ ที่คำนวณจากตัวชี้วัด จปฐ  หรือไม่ [1: ตก   0: ไม่ตก]</td></tr>
+            <tr><td>poor_household_ACCESSIBILITY</td><td>บ้านตกเกณฑ์ยากจน MPI ด้านการเข้าถึงบริการรัฐ ที่คำนวณจากตัวชี้วัด จปฐ  หรือไม่ [1: ตก   0: ไม่ตก]</td></tr>
+          </table>
+        </div>
+              
+        </div>
+      
+      </div>
+
+            
+        </p>
+        
+        
+        <script type="text/javascript">
+            // Get the modal
+                var modal = document.getElementById("dataModal");
+    
+                // Get the button that opens the modal
+                var btn = document.getElementById("datadict");
+    
+                // Get the <span> element that closes the modal
+                var span = document.getElementsByClassName("close")[0];
+    
+                // When the user clicks on the button, open the modal
+                btn.onclick = function() {
+                    modal.style.display = "block";
+                }
+    
+                // When the user clicks on <span> (x), close the modal
+                span.onclick = function() {
+                    modal.style.display = "none";
+                }
+    
+                // When the user clicks anywhere outside of the modal, close it
+                window.onclick = function(event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                }
+            </script>
+    </body>
+</html>
